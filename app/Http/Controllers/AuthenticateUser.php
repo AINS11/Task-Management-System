@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthenticateUser extends Controller
 {
@@ -17,7 +18,6 @@ class AuthenticateUser extends Controller
             'password' => 'required|min:6',
         ]);
         if ($validator->fails()) {
-            // dd($validator->errors()->messages());
             return back()->with('error', $validator->errors()->messages())->withInput();
         }
 
@@ -35,32 +35,42 @@ class AuthenticateUser extends Controller
   
             return redirect('/')->with('success', 'Logged In successful!')->withCookie($cookie);
         }
-
         // Authentication failed
         return back()->with('failed', 'Invalid credentials')->withInput();
     }
+    
     function registerubmit(Request $req){
         // Validate input
-    $validator = Validator::make($req->all(), [
-        'name' => 'min:3',
-        'email' => 'required|email|unique:users,email', // Ensures email is unique
-        'password' => 'required|min:6', // Requires password confirmation field
-    ]);
+        $validator = Validator::make($req->all(), [
+            'name' => 'min:3',
+            'email' => 'required|email|unique:users,email', // Ensures email is unique
+            'password' => 'required|min:6', // Requires password confirmation field
+        ]);
 
-    if ($validator->fails()) {
-        return back()->with('error', $validator->errors()->messages())->withInput();
+        if ($validator->fails()) {
+            return back()->with('error', $validator->errors()->messages())->withInput();
+        }
+
+        // Create user
+        $user = User::create([
+            'name' => $req->name,
+            'email' => $req->email,
+            'password' => Hash::make($req->password), // Hash the password
+        ]);
+
+        // Log in the user
+        Auth::login($user);
+
+        return redirect('/')->with('success', 'Registration successful! You are now logged in.');
     }
 
-    // Create user
-    $user = User::create([
-        'name' => $req->name,
-        'email' => $req->email,
-        'password' => Hash::make($req->password), // Hash the password
-    ]);
-
-    // Log in the user
-    Auth::login($user);
-
-    return redirect('/')->with('success', 'Registration successful! You are now logged in.');
+    public function logoutSubmit(Request $request)
+    {
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken()); // Invalidate token
+            return redirect('/login')->with('success', 'Logged out successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Logout failed. Try again.');
+        }
     }
 }

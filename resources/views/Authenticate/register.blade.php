@@ -1,7 +1,9 @@
 @extends('layouts.app')
 
 @section('title', 'Register')
-
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/default.css') }}">
+@endpush
 @section('content')
 
     <div class="login-container">

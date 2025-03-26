@@ -2,6 +2,10 @@
 
 @section('title', 'Login')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/default.css') }}">
+@endpush
+
 @section('content')
     <div class="login-container">
         
